@@ -1,9 +1,14 @@
 package models
 
-import "time"
+import (
+	"log"
+	"time"
+
+	"loc.com/hocgolang/db"
+)
 
 type Event struct {
-	ID          int
+	ID          int64
 	Name        string    `binding:"required"`
 	Description string    `binding:"required"`
 	Location    string    `binding:"required"`
@@ -13,11 +18,54 @@ type Event struct {
 
 var events []Event = []Event{}
 
-func (e Event) Save() {
+func (e Event) Save() error {
 	// later: add ot tp a database
-	events = append(events, e)
+	query := `INSERT INTO events(name, description, location, dateTime, user_id) 
+		VALUES (?, ?, ?, ?, ?) 
+		`
+	stmt, err := db.DB.Prepare(query)
+	if err != nil {
+		log.Printf("Error preparing statement: %v", err)
+		return err
+	}
+	defer stmt.Close()
+	result, err := stmt.Exec(e.Name, e.Description, e.Location, e.DateTime, e.UserID)
+	if err != nil {
+		log.Printf("Error executing statement: %v", err)
+		return err
+	}
+	id, err := result.LastInsertId()
+
+	if err != nil {
+		log.Printf("Error getting last insert ID: %v", err)
+		return err
+	}
+	e.ID = id
+
+	return err
 }
 
-func GetAllEvents() []Event {
-	return events
+func GetAllEvents() ([]Event, error) {
+
+	query := "SELECT * FROM events"
+	rows, err := db.DB.Query(query)
+	if err != nil {
+		log.Printf("Error select from events: %v", err)
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var events []Event
+
+	for rows.Next() {
+		var event Event
+		err := rows.Scan(&event.ID, &event.Name, &event.Description, &event.Location, &event.DateTime, &event.UserID)
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, event)
+	}
+
+	return events, nil
 }
