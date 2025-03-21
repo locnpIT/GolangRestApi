@@ -15,7 +15,7 @@ var events []Event = []Event{}
 
 func (e Event) Save() {
 	// later: add ot tp a database
-	events = append(events)
+	events = append(events, e)
 }
 
 func GetAllEvents() []Event {
