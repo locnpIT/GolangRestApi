@@ -54,35 +54,76 @@ func createEvent(context *gin.Context) {
 
 }
 
+// func updateEvent(context *gin.Context) {
+// 	eventId, err := strconv.ParseInt(context.Param("id"), 10, 64)
+// 	if err != nil {
+// 		context.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse event id."})
+// 		return
+// 	}
+// 	_, err = models.GetEventByID(eventId)
+
+// 	if err != nil {
+// 		context.JSON(http.StatusInternalServerError, gin.H{"message": "Could not found event."})
+// 		return
+// 	}
+
+// 	var updatedEvent models.Event
+// 	err = context.ShouldBindJSON(&updatedEvent)
+
+// 	if err != nil {
+// 		context.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse request event."})
+// 		return
+// 	}
+
+// 	updatedEvent.ID = eventId
+
+// 	err = updatedEvent.Update()
+// 	if err != nil {
+// 		context.JSON(http.StatusBadRequest, gin.H{"message": "Could not update event."})
+// 		return
+// 	}
+
+// 	context.JSON(http.StatusOK, gin.H{"message": "Event updated successfully!"})
+
+// }
+
 func updateEvent(context *gin.Context) {
 	eventId, err := strconv.ParseInt(context.Param("id"), 10, 64)
 	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse event id."})
+		context.JSON(http.StatusBadRequest, gin.H{"message": "invalid event id"})
 		return
 	}
-	_, err = models.GetEventByID(eventId)
-
+	var updatedEvent *models.Event
+	updatedEvent, err = models.GetEventByID(eventId)
 	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"message": "Could not found event."})
+		context.JSON(http.StatusNotFound, gin.H{"message": "Cannot fetch user"})
+		return
+	}
+	var requestData models.Event
+	if err := context.ShouldBindJSON(&requestData); err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse request body"})
 		return
 	}
 
-	var updatedEvent models.Event
-	err = context.ShouldBindJSON(&updatedEvent)
-
-	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse request event."})
-		return
+	if requestData.Name != "" {
+		updatedEvent.Name = requestData.Name
 	}
-
-	updatedEvent.ID = eventId
+	if requestData.Description != "" {
+		updatedEvent.Description = requestData.Description
+	}
+	if requestData.Location != "" {
+		updatedEvent.Location = requestData.Location
+	}
+	if !requestData.DateTime.IsZero() {
+		updatedEvent.DateTime = requestData.DateTime
+	}
 
 	err = updatedEvent.Update()
 	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"message": "Could not update event."})
+		context.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to update event"})
 		return
 	}
 
-	context.JSON(http.StatusOK, gin.H{"message": "Event updated successfully!"})
+	context.JSON(http.StatusOK, gin.H{"message": "Event updated successfully"})
 
 }
