@@ -87,7 +87,6 @@ func (event Event) Update() error {
 		UPDATE events SET
 		name = ?, description = ?, location = ?, dateTime = ?
 		WHERE id = ?
-	
 	`
 
 	stmt, err := db.DB.Prepare(query)
