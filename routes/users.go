@@ -10,6 +10,7 @@ import (
 func signup(context *gin.Context) {
 	var user models.User
 
+	//bind json vào User
 	err := context.ShouldBindJSON(&user)
 
 	if err != nil {
