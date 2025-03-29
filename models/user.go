@@ -1,6 +1,8 @@
 package models
 
 import (
+	"errors"
+
 	"loc.com/hocgolang/db"
 	"loc.com/hocgolang/utils"
 )
@@ -40,31 +42,24 @@ func (u User) Save() error {
 	// upload code to github
 }
 
-func (u User) save() error {
-	query := `INSERT INTO users(email, password) VALUES(?,?)`
-	stmt, err := db.DB.Prepare(query)
+func (u User) ValidateCredentials() error {
+
+	query := `SELECT password FROM users WHERE email = ?`
+	row := db.DB.QueryRow(query, u.Email)
+
+	var retrievedPassword string
+	err := row.Scan(&retrievedPassword)
 
 	if err != nil {
-		return err
+		return errors.New("Credentials invalid")
 	}
 
-	defer stmt.Close()
+	passwordIsValid := utils.CheckPasswordHash(u.Password, retrievedPassword)
 
-	hashedPassword, err := utils.HashPassword(u.Password)
-
-	if err != nil {
-		return err
-	}
-	result, err := stmt.Exec(u.Email, hashedPassword)
-
-	if err != nil {
-		return err
+	if !passwordIsValid {
+		return errors.New("Credentials invalid")
 	}
 
-	userId, err := result.LastInsertId()
+	return nil
 
-	u.ID = userId
-
-	return err
-	// upload code to github
 }
