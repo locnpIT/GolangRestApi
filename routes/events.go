@@ -3,9 +3,11 @@ package routes
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"loc.com/hocgolang/models"
+	"loc.com/hocgolang/utils"
 )
 
 func getEvent(context *gin.Context) {
@@ -34,32 +36,53 @@ func getEvents(context *gin.Context) {
 }
 
 func createEvent(context *gin.Context) {
+	authHeader := context.Request.Header.Get("Authorization") // Lấy header
 
-	token := context.Request.Header.Get("Authorization")
-
-	if token == "" {
-		context.JSON(http.StatusUnauthorized, gin.H{"message": "Not authorized"})
+	if authHeader == "" {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "Not authorized. Authorization header missing."})
 		return
 	}
 
+	// Kiểm tra xem header có bắt đầu bằng "Bearer " không
+	// và tách lấy phần token thực sự
+	parts := strings.Split(authHeader, " ")
+	if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "Not authorized. Invalid Authorization header format."})
+		return
+	}
+
+	tokenString := parts[1] // Đây mới là chuỗi JWT cần verify
+
+	// Gọi VerifyToken với chuỗi JWT đã được tách ra
+	err := utils.VerifyToken(tokenString)
+
+	if err != nil {
+		// Có thể log lỗi err ở đây để debug rõ hơn
+		// log.Printf("Token verification failed: %v\n", err)
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "Not authorized. Invalid token."})
+		return
+	}
+
+	// --- Phần còn lại của hàm giữ nguyên ---
 	var event models.Event
-	err := context.ShouldBindJSON(&event)
+	err = context.ShouldBindJSON(&event)
 
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"message": "could not parse request data."})
 		return
 	}
 
-	event.ID = 1
-	event.UserID = 1
+	// !!! Quan trọng: Phần này bạn đang hardcode UserID.
+	// !!! Bạn nên lấy UserID từ trong token sau khi verify thành công.
+	// event.ID = 1 // ID thường do database tự tạo hoặc không cần set ở đây
+	event.UserID = 1 // <<-- Nên lấy từ token
 
 	err = event.Save()
 	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"message": "Could not create events. Try again latter"})
+		context.JSON(http.StatusInternalServerError, gin.H{"message": "Could not create event. Try again later"})
 		return
 	}
 	context.JSON(http.StatusCreated, gin.H{"message": "Event created!", "event": event})
-
 }
 
 // func updateEvent(context *gin.Context) {
