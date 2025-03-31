@@ -13,12 +13,12 @@ type Event struct {
 	Description string    `binding:"required"`
 	Location    string    `binding:"required"`
 	DateTime    time.Time `binding:"required"` //chỗ này nếu mình không điền thì báo lỗi
-	UserID      int
+	UserID      int64
 }
 
 var events []Event = []Event{}
 
-func (e Event) Save() error {
+func (e *Event) Save() error {
 	// later: add ot tp a database
 	query := `INSERT INTO events(name, description, location, dateTime, user_id) 
 		VALUES (?, ?, ?, ?, ?) 
@@ -36,10 +36,10 @@ func (e Event) Save() error {
 	}
 	id, err := result.LastInsertId()
 
-	if err != nil {
-		log.Printf("Error getting last insert ID: %v", err)
-		return err
-	}
+	// if err != nil {
+	// 	log.Printf("Error getting last insert ID: %v", err)
+	// 	return err
+	// }
 	e.ID = id
 
 	return err

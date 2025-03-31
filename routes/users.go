@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -30,7 +31,7 @@ func signup(context *gin.Context) {
 
 func login(context *gin.Context) {
 
-	var user models.User
+	var user *models.User
 
 	err := context.ShouldBindJSON(&user)
 
@@ -40,6 +41,7 @@ func login(context *gin.Context) {
 	}
 
 	err = user.ValidateCredentials()
+	log.Printf("Attempting to create event for UserID: %d", user.ID)
 
 	if err != nil {
 		context.JSON(http.StatusUnauthorized, gin.H{"message": "User unauthorized"})
