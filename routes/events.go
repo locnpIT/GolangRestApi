@@ -1,14 +1,11 @@
 package routes
 
 import (
-	"log"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"loc.com/hocgolang/models"
-	"loc.com/hocgolang/utils"
 )
 
 func getEvent(context *gin.Context) {
@@ -37,36 +34,16 @@ func getEvents(context *gin.Context) {
 }
 
 func createEvent(context *gin.Context) {
-	authHeader := context.Request.Header.Get("Authorization")
 
-	if authHeader == "" {
-		context.JSON(http.StatusUnauthorized, gin.H{"message": "Not authorized. Authorization header missing."})
-		return
-	}
-
-	parts := strings.Split(authHeader, " ")
-	if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
-		context.JSON(http.StatusUnauthorized, gin.H{"message": "Not authorized. Invalid Authorization header format."})
-		return
-	}
-
-	tokenString := parts[1]
-
-	userId, err := utils.VerifyToken(tokenString)
-
-	if err != nil {
-
-		context.JSON(http.StatusUnauthorized, gin.H{"message": "Not authorized. Invalid token."})
-		return
-	}
-	log.Printf("Attempting to create event for UserID: %d", userId)
 	var event models.Event
-	err = context.ShouldBindJSON(&event)
+	err := context.ShouldBindJSON(&event)
 
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"message": "could not parse request data."})
 		return
 	}
+
+	userId := context.GetInt64("userId")
 
 	event.UserID = userId // <<-- Nên lấy từ token
 
