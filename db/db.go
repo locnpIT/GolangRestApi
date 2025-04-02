@@ -65,12 +65,12 @@ func createTables() {
 	}
 
 	createRegistrationsTable := `
-		CREATE TABLE IF NOT EXIST registrations (
+		CREATE TABLE IF NOT EXISTS registrations (
 			id INT AUTO_INCREMENT PRIMARY KEY,
 			event_id INT,
 			user_id INT,
-			FOREIGN KEY (user_id) REFERENCES users(id)
-			FIREIGN KEY (event_id) REFERENCES events(id)
+			FOREIGN KEY (user_id) REFERENCES users(id),
+			FOREIGN KEY (event_id) REFERENCES events(id)
 		)
 	`
 	_, err = DB.Exec(createRegistrationsTable)
