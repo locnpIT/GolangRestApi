@@ -47,6 +47,6 @@ func cancelRegistration(context *gin.Context) {
 		return
 	}
 
-	context.JSON(http.StatusCreated, gin.H{"message": "Cancelled!"})
+	context.JSON(http.StatusOK, gin.H{"message": "Cancelled!"})
 
 }
